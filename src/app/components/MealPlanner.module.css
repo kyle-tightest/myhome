@@ -1,0 +1,123 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+.weeklyGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 16px;
+  overflow-x: auto;
+  padding-bottom: 16px;
+}
+
+.dayColumn {
+  display: flex;
+  flex-direction: column;
+  min-width: 140px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--surface-border);
+  border-radius: 12px;
+  padding: 16px;
+  min-height: 200px;
+}
+
+.dayTitle {
+  font-weight: 600;
+  margin-bottom: 16px;
+  text-align: center;
+  color: var(--text-main);
+  border-bottom: 1px solid var(--surface-border);
+  padding-bottom: 8px;
+}
+
+.mealSlot {
+  background: var(--surface-color);
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+  text-align: center;
+  border: 1px dashed var(--primary-color);
+  color: var(--primary-color);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.mealSlot:hover {
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.mealSlotAssigned {
+  background: rgba(16, 185, 129, 0.2);
+  border: 1px solid var(--primary-color);
+  color: #fff;
+}
+
+.recipeGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 24px;
+}
+
+.recipeCard {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.recipeTitle {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--text-main);
+}
+
+.ingredientList {
+  margin-top: 12px;
+  margin-bottom: 16px;
+  padding-left: 20px;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.ingredientItem {
+  margin-bottom: 4px;
+}
+
+.ingredientAvailable {
+  color: #34d399;
+}
+
+.ingredientMissing {
+  color: #f87171;
+}
+
+.recipeMethod {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  background: rgba(0,0,0,0.3);
+  padding: 12px;
+  border-radius: 8px;
+  line-height: 1.5;
+}
+
+.availabilityBadge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.badgeReady {
+  background: rgba(16, 185, 129, 0.2);
+  color: #34d399;
+}
+
+.badgeMissing {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+}
