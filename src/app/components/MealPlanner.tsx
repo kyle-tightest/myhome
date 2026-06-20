@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import styles from './MealPlanner.module.css';
 
 type GroceryItem = {
@@ -38,10 +38,25 @@ const mockRecipes = [
   }
 ];
 
-const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-
 export default function MealPlanner({ items }: { items: GroceryItem[] }) {
   const [weeklyMeals, setWeeklyMeals] = useState<Record<string, string>>({});
+  const [days, setDays] = useState<{id: string, name: string, date: number, isToday: boolean}[]>([]);
+
+  useEffect(() => {
+    const generatedDays = [];
+    const today = new Date();
+    for (let i = 0; i < 7; i++) {
+      const nextDate = new Date(today);
+      nextDate.setDate(today.getDate() + i);
+      generatedDays.push({
+        id: nextDate.toISOString().split('T')[0],
+        name: nextDate.toLocaleDateString('en-US', { weekday: 'short' }),
+        date: nextDate.getDate(),
+        isToday: i === 0,
+      });
+    }
+    setDays(generatedDays);
+  }, []);
 
   const calculateDaysAgo = (date: Date) => {
     const diffTime = Math.abs(new Date().getTime() - new Date(date).getTime());
@@ -83,24 +98,28 @@ export default function MealPlanner({ items }: { items: GroceryItem[] }) {
       <section>
         <h2>This Week's Meals</h2>
         <div className={styles.weeklyGrid}>
-          {DAYS.map(day => (
-            <div key={day} className={styles.dayColumn}>
-              <div className={styles.dayTitle}>{day}</div>
-              {weeklyMeals[day] ? (
+          {days.map(day => (
+            <div key={day.id} className={styles.dayColumn}>
+              <div className={styles.dayTitle}>
+                <span style={{ fontWeight: day.isToday ? 'bold' : 'normal', color: day.isToday ? 'var(--primary-color)' : 'inherit' }}>
+                  {day.name} {day.date}
+                </span>
+              </div>
+              {weeklyMeals[day.id] ? (
                 <div 
                   className={`${styles.mealSlot} ${styles.mealSlotAssigned}`}
-                  onClick={() => assignMeal(day)}
-                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') assignMeal(day); }}
+                  onClick={() => assignMeal(day.id)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') assignMeal(day.id); }}
                   tabIndex={0}
                   role="button"
                 >
-                  {weeklyMeals[day]}
+                  {weeklyMeals[day.id]}
                 </div>
               ) : (
                 <div 
                   className={styles.mealSlot}
-                  onClick={() => assignMeal(day)}
-                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') assignMeal(day); }}
+                  onClick={() => assignMeal(day.id)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') assignMeal(day.id); }}
                   tabIndex={0}
                   role="button"
                 >
