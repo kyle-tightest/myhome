@@ -18,7 +18,7 @@ export default async function Home({
   const inactiveStyle = { background: 'transparent', color: 'var(--text-muted)', border: '1px solid rgba(255,255,255,0.1)' };
 
   return (
-    <div style={{ padding: '40px 24px', maxWidth: '1200px', margin: '0 auto', minHeight: '100vh' }}>
+    <div style={{ padding: 'max(5vh, 40px) max(5vw, 40px)', maxWidth: '1200px', margin: '0 auto', minHeight: '100vh' }}>
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
         <h1>MyHome Dashboard</h1>
         <div style={{ display: 'flex', gap: '16px' }}>

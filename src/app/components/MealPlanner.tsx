@@ -90,6 +90,9 @@ export default function MealPlanner({ items }: { items: GroceryItem[] }) {
                 <div 
                   className={`${styles.mealSlot} ${styles.mealSlotAssigned}`}
                   onClick={() => assignMeal(day)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') assignMeal(day); }}
+                  tabIndex={0}
+                  role="button"
                 >
                   {weeklyMeals[day]}
                 </div>
@@ -97,6 +100,9 @@ export default function MealPlanner({ items }: { items: GroceryItem[] }) {
                 <div 
                   className={styles.mealSlot}
                   onClick={() => assignMeal(day)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') assignMeal(day); }}
+                  tabIndex={0}
+                  role="button"
                 >
                   + Assign Meal
                 </div>
