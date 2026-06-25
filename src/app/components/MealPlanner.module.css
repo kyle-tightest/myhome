@@ -124,8 +124,8 @@
 }
 
 .dayColumnEatOut {
-  border-color: rgba(251, 146, 60, 0.65);
-  background: rgba(251, 146, 60, 0.12);
+  border-color: rgba(59, 130, 246, 0.65);
+  background: rgba(59, 130, 246, 0.14);
 }
 
 .dayColumnEmpty {
@@ -168,9 +168,9 @@
 }
 
 .dayStatusEatOut {
-  color: #fdba74;
-  background: rgba(251, 146, 60, 0.18);
-  border-color: rgba(251, 146, 60, 0.35);
+  color: #93c5fd;
+  background: rgba(59, 130, 246, 0.2);
+  border-color: rgba(59, 130, 246, 0.4);
 }
 
 .dayStatusEmpty {
