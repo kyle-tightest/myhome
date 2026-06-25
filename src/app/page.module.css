@@ -1,0 +1,57 @@
+.page {
+  padding: max(5vh, 40px) max(5vw, 40px);
+  max-width: 1200px;
+  margin: 0 auto;
+  min-height: 100vh;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 40px;
+  flex-wrap: wrap;
+}
+
+.tabNav {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.tabButton {
+  min-width: 120px;
+}
+
+.section {
+  margin-bottom: 48px;
+}
+
+.sectionIntro {
+  margin-bottom: 24px;
+}
+
+@media (max-width: 768px) {
+  .page {
+    padding: 24px 16px;
+  }
+
+  .header {
+    margin-bottom: 24px;
+  }
+
+  .tabNav {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .tabButton {
+    width: 100%;
+    min-width: 0;
+    padding: 12px 14px;
+    font-size: 0.95rem;
+  }
+}

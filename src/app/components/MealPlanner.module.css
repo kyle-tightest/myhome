@@ -121,3 +121,25 @@
   background: rgba(239, 68, 68, 0.2);
   color: #f87171;
 }
+
+@media (max-width: 768px) {
+  .container {
+    gap: 28px;
+  }
+
+  .weeklyGrid {
+    gap: 12px;
+    padding-bottom: 10px;
+  }
+
+  .dayColumn {
+    min-width: 120px;
+    padding: 12px;
+    min-height: 170px;
+  }
+
+  .recipeGrid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
