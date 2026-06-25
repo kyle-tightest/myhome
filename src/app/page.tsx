@@ -1,4 +1,5 @@
 import { getGroceryItems } from './actions/grocery';
+import { getMealPlansForNextWeek, getRecipes } from './actions/meal-planner';
 import GroceryList from './components/GroceryList';
 import MealPlanner from './components/MealPlanner';
 import Link from 'next/link';
@@ -11,7 +12,11 @@ export default async function Home({
 }: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
-  const items = await getGroceryItems();
+  const [items, recipes, mealPlans] = await Promise.all([
+    getGroceryItems(),
+    getRecipes(),
+    getMealPlansForNextWeek(),
+  ]);
   const resolvedParams = await searchParams;
   const currentTab = resolvedParams.tab || 'groceries';
 
@@ -37,7 +42,7 @@ export default async function Home({
           </section>
         ) : (
           <section className={styles.section}>
-            <MealPlanner items={items} />
+            <MealPlanner items={items} recipes={recipes} mealPlans={mealPlans} />
           </section>
         )}
       </main>

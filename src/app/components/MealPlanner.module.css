@@ -4,6 +4,100 @@
   gap: 40px;
 }
 
+.createRecipeSection {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.createRecipeHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.createRecipeHint {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.createRecipeOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 6, 23, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  z-index: 50;
+}
+
+.createRecipeModal {
+  width: min(680px, 100%);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.modalClose {
+  background: transparent;
+  border: 1px solid var(--surface-border);
+  color: var(--text-main);
+  border-radius: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.recipeForm {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ingredientsInput {
+  width: 100%;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--surface-border);
+  border-radius: 12px;
+  color: var(--text-main);
+  font-size: 0.95rem;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.ingredientsInput:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.instructionsInput {
+  width: 100%;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--surface-border);
+  border-radius: 12px;
+  color: var(--text-main);
+  font-size: 1rem;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 220px;
+}
+
+.instructionsInput:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  background: rgba(0, 0, 0, 0.4);
+}
+
 .weeklyGrid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
@@ -21,6 +115,21 @@
   border-radius: 12px;
   padding: 16px;
   min-height: 200px;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.dayColumnSelected {
+  border-color: rgba(16, 185, 129, 0.65);
+  background: rgba(16, 185, 129, 0.12);
+}
+
+.dayColumnEatOut {
+  border-color: rgba(251, 146, 60, 0.65);
+  background: rgba(251, 146, 60, 0.12);
+}
+
+.dayColumnEmpty {
+  border-color: rgba(148, 163, 184, 0.4);
 }
 
 .dayTitle {
@@ -32,27 +141,71 @@
   padding-bottom: 8px;
 }
 
-.mealSlot {
-  background: var(--surface-color);
-  padding: 12px;
+.daySelect {
+  width: 100%;
+  padding: 10px;
   border-radius: 8px;
-  margin-bottom: 8px;
+  border: 1px solid var(--surface-border);
+  background: rgba(0, 0, 0, 0.25);
+  color: var(--text-main);
   font-size: 0.9rem;
-  text-align: center;
-  border: 1px dashed var(--primary-color);
-  color: var(--primary-color);
-  cursor: pointer;
-  transition: all 0.2s;
 }
 
-.mealSlot:hover {
-  background: rgba(16, 185, 129, 0.1);
+.dayStatus {
+  margin-bottom: 10px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.25;
+  border: 1px solid transparent;
 }
 
-.mealSlotAssigned {
-  background: rgba(16, 185, 129, 0.2);
-  border: 1px solid var(--primary-color);
-  color: #fff;
+.dayStatusSelected {
+  color: #34d399;
+  background: rgba(16, 185, 129, 0.18);
+  border-color: rgba(16, 185, 129, 0.35);
+}
+
+.dayStatusEatOut {
+  color: #fdba74;
+  background: rgba(251, 146, 60, 0.18);
+  border-color: rgba(251, 146, 60, 0.35);
+}
+
+.dayStatusEmpty {
+  color: #cbd5e1;
+  background: rgba(148, 163, 184, 0.16);
+  border-color: rgba(148, 163, 184, 0.3);
+}
+
+.eatOutWrap {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.eatOutDescription {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid var(--surface-border);
+  background: rgba(0, 0, 0, 0.25);
+  color: var(--text-main);
+  font-size: 0.85rem;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.eatOutDescription:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.eatOutSaveBtn {
+  width: 100%;
 }
 
 .recipeGrid {
@@ -70,28 +223,32 @@
 .recipeTitle {
   font-size: 1.2rem;
   font-weight: 600;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
   color: var(--text-main);
 }
 
-.ingredientList {
-  margin-top: 12px;
-  margin-bottom: 16px;
-  padding-left: 20px;
+.ingredientSummary {
   color: var(--text-muted);
-  font-size: 0.9rem;
+  font-size: 0.85rem;
+  margin-bottom: 10px;
 }
 
-.ingredientItem {
-  margin-bottom: 4px;
+.ingredientList {
+  list-style: none;
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
-.ingredientAvailable {
+.ingredientInStock {
   color: #34d399;
+  font-size: 0.9rem;
 }
 
 .ingredientMissing {
   color: #f87171;
+  font-size: 0.9rem;
 }
 
 .recipeMethod {
@@ -101,30 +258,40 @@
   padding: 12px;
   border-radius: 8px;
   line-height: 1.5;
+  white-space: pre-wrap;
+  margin-bottom: 16px;
 }
 
-.availabilityBadge {
-  display: inline-block;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  margin-bottom: 12px;
+.btnSecondary {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-main);
+  border: 1px solid var(--surface-border);
+  padding: 10px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
 }
 
-.badgeReady {
-  background: rgba(16, 185, 129, 0.2);
-  color: #34d399;
+.btnSecondary:hover {
+  background: rgba(255, 255, 255, 0.14);
 }
 
-.badgeMissing {
-  background: rgba(239, 68, 68, 0.2);
-  color: #f87171;
+.deleteRecipeBtn {
+  align-self: flex-start;
 }
 
 @media (max-width: 768px) {
   .container {
     gap: 28px;
+  }
+
+  .createRecipeHeader {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .createRecipeHeader button {
+    width: 100%;
   }
 
   .weeklyGrid {
@@ -141,5 +308,9 @@
   .recipeGrid {
     grid-template-columns: 1fr;
     gap: 16px;
+  }
+
+  .instructionsInput {
+    min-height: 180px;
   }
 }

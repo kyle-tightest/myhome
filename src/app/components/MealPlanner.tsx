@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react';
+import { useState, useTransition, type FormEvent } from 'react';
+import { addRecipe, assignEatOutToDay, assignRecipeToDay, deleteRecipe } from '../actions/meal-planner';
 import styles from './MealPlanner.module.css';
 
 type GroceryItem = {
@@ -11,160 +12,339 @@ type GroceryItem = {
   needsRestock: boolean;
 };
 
-const mockRecipes = [
-  {
-    id: 'r1',
-    name: 'Avocado Toast & Eggs',
-    ingredients: ['Bread', 'Avocado', 'Eggs'],
-    method: 'Toast the bread. Mash avocado on top. Fry or poach eggs and place on avocado. Season with salt and pepper.'
-  },
-  {
-    id: 'r2',
-    name: 'Creamy Tomato Pasta',
-    ingredients: ['Pasta', 'Tomato', 'Cream', 'Garlic'],
-    method: 'Boil pasta. Sauté garlic, add chopped tomatoes and cream. Simmer until thick, then mix in pasta.'
-  },
-  {
-    id: 'r3',
-    name: 'Chicken Rice Bowl',
-    ingredients: ['Chicken', 'Rice', 'Broccoli', 'Soy Sauce'],
-    method: 'Cook rice. Pan-fry chicken chunks. Steam broccoli. Serve in a bowl and drizzle with soy sauce.'
-  },
-  {
-    id: 'r4',
-    name: 'Oatmeal & Berries',
-    ingredients: ['Oats', 'Milk', 'Berries', 'Honey'],
-    method: 'Cook oats with milk. Top with fresh berries and a drizzle of honey.'
+type Recipe = {
+  id: string;
+  name: string;
+  ingredients: string[];
+  instructions: string;
+};
+
+type MealPlan = {
+  dateKey: string;
+  recipeId: string | null;
+  eatOutDescription: string | null;
+};
+
+type DayPlan = {
+  selection: string;
+  eatOutDescription: string;
+};
+
+const EAT_OUT_VALUE = '__eat_out__';
+
+type Day = {
+  id: string;
+  name: string;
+  date: number;
+  isToday: boolean;
+};
+
+const getUpcomingWeek = (): Day[] => {
+  const generatedDays: Day[] = [];
+  const today = new Date();
+
+  for (let i = 0; i < 7; i++) {
+    const nextDate = new Date(today);
+    nextDate.setDate(today.getDate() + i);
+    generatedDays.push({
+      id: nextDate.toISOString().split('T')[0],
+      name: nextDate.toLocaleDateString('en-US', { weekday: 'short' }),
+      date: nextDate.getDate(),
+      isToday: i === 0,
+    });
   }
-];
 
-export default function MealPlanner({ items }: { items: GroceryItem[] }) {
-  const [weeklyMeals, setWeeklyMeals] = useState<Record<string, string>>({});
-  const [days, setDays] = useState<{id: string, name: string, date: number, isToday: boolean}[]>([]);
+  return generatedDays;
+};
 
-  useEffect(() => {
-    const generatedDays = [];
-    const today = new Date();
-    for (let i = 0; i < 7; i++) {
-      const nextDate = new Date(today);
-      nextDate.setDate(today.getDate() + i);
-      generatedDays.push({
-        id: nextDate.toISOString().split('T')[0],
-        name: nextDate.toLocaleDateString('en-US', { weekday: 'short' }),
-        date: nextDate.getDate(),
-        isToday: i === 0,
-      });
-    }
-    setDays(generatedDays);
-  }, []);
+export default function MealPlanner({ items, recipes, mealPlans }: { items: GroceryItem[]; recipes: Recipe[]; mealPlans: MealPlan[] }) {
+  const [isPending, startTransition] = useTransition();
+  const [isCreateRecipeOpen, setIsCreateRecipeOpen] = useState(false);
+  const days = getUpcomingWeek();
 
   const calculateDaysAgo = (date: Date) => {
     const diffTime = Math.abs(new Date().getTime() - new Date(date).getTime());
     return Math.floor(diffTime / (1000 * 60 * 60 * 24));
   };
 
-  const inStockNames = items.filter(item => {
-    const daysAgo = calculateDaysAgo(item.lastStocked);
-    return !item.needsRestock && daysAgo < item.estimatedDays;
-  }).map(item => item.name.toLowerCase());
+  const inStockNames = items
+    .filter((item) => {
+      const daysAgo = calculateDaysAgo(item.lastStocked);
+      return !item.needsRestock && daysAgo < item.estimatedDays;
+    })
+    .map((item) => item.name.toLowerCase());
 
-  const checkAvailability = (ingredient: string) => {
-    // Basic substring check against stock
-    return inStockNames.some(stockItem => stockItem.includes(ingredient.toLowerCase()) || ingredient.toLowerCase().includes(stockItem));
+  const isIngredientInStock = (ingredient: string) => {
+    const loweredIngredient = ingredient.toLowerCase();
+    return inStockNames.some(
+      (stockItem) =>
+        stockItem.includes(loweredIngredient) || loweredIngredient.includes(stockItem)
+    );
   };
 
-  const assignMeal = (day: string) => {
-    const recipeId = prompt("Enter the name of the recipe you'd like to assign here (or cancel to clear):");
-    if (recipeId === null) return;
-    
-    // Simple mock assignment by finding matching name
-    if (recipeId.trim() === '') {
-      const newMeals = {...weeklyMeals};
-      delete newMeals[day];
-      setWeeklyMeals(newMeals);
-    } else {
-      const recipe = mockRecipes.find(r => r.name.toLowerCase().includes(recipeId.toLowerCase()));
-      if (recipe) {
-        setWeeklyMeals({...weeklyMeals, [day]: recipe.name});
-      } else {
-        alert("Recipe not found in options.");
+  const getMissingIngredients = (recipe: Recipe) =>
+    recipe.ingredients.filter((ingredient) => !isIngredientInStock(ingredient));
+
+  const mealPlanMap = mealPlans.reduce<Record<string, DayPlan>>((acc, plan) => {
+    acc[plan.dateKey] = {
+      selection: plan.recipeId ? plan.recipeId : (plan.eatOutDescription ? EAT_OUT_VALUE : ''),
+      eatOutDescription: plan.eatOutDescription ?? '',
+    };
+    return acc;
+  }, {});
+
+  const [assignments, setAssignments] = useState<Record<string, DayPlan>>(mealPlanMap);
+
+  const getDayPlan = (dateKey: string): DayPlan => (
+    assignments[dateKey] ?? { selection: '', eatOutDescription: '' }
+  );
+
+  const getRecipeNameById = (recipeId: string) =>
+    recipes.find((recipe) => recipe.id === recipeId)?.name ?? 'Recipe';
+
+  const handleCreateRecipe = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+
+    startTransition(async () => {
+      await addRecipe(formData);
+      form.reset();
+      setIsCreateRecipeOpen(false);
+    });
+  };
+
+  const handleAssignRecipe = (dateKey: string, selection: string) => {
+    const existingDescription = getDayPlan(dateKey).eatOutDescription;
+
+    setAssignments((currentState) => ({
+      ...currentState,
+      [dateKey]: {
+        selection,
+        eatOutDescription: currentState[dateKey]?.eatOutDescription ?? '',
+      },
+    }));
+
+    startTransition(async () => {
+      if (selection === EAT_OUT_VALUE) {
+        await assignEatOutToDay(dateKey, existingDescription);
+        return;
       }
+
+      await assignRecipeToDay(dateKey, selection || null);
+    });
+  };
+
+  const handleEatOutDescriptionChange = (dateKey: string, eatOutDescription: string) => {
+    setAssignments((currentState) => ({
+      ...currentState,
+      [dateKey]: {
+        selection: currentState[dateKey]?.selection ?? EAT_OUT_VALUE,
+        eatOutDescription,
+      },
+    }));
+  };
+
+  const saveEatOutDescription = (dateKey: string) => {
+    const eatOutDescription = getDayPlan(dateKey).eatOutDescription;
+
+    startTransition(async () => {
+      await assignEatOutToDay(dateKey, eatOutDescription);
+    });
+  };
+
+  const handleDeleteRecipe = (recipeId: string) => {
+    if (!confirm('Delete this recipe?')) {
+      return;
     }
+
+    startTransition(async () => {
+      await deleteRecipe(recipeId);
+    });
   };
 
   return (
     <div className={styles.container}>
-      
+
+      <section className={`glass-panel ${styles.createRecipeSection}`}>
+        <div className={styles.createRecipeHeader}>
+          <h2>Create Recipe</h2>
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() => setIsCreateRecipeOpen(true)}
+            disabled={isPending}
+          >
+            New Recipe
+          </button>
+        </div>
+        <p className={styles.createRecipeHint}>Open the recipe form in a pop-out and save when ready.</p>
+      </section>
+
+      {isCreateRecipeOpen && (
+        <div className={styles.createRecipeOverlay} onClick={() => setIsCreateRecipeOpen(false)}>
+          <div className={`glass-panel ${styles.createRecipeModal}`} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h3>Create Recipe</h3>
+              <button
+                type="button"
+                className={styles.modalClose}
+                onClick={() => setIsCreateRecipeOpen(false)}
+                disabled={isPending}
+              >
+                Close
+              </button>
+            </div>
+            <form onSubmit={handleCreateRecipe} className={styles.recipeForm}>
+              <input
+                type="text"
+                name="name"
+                placeholder="Recipe name"
+                required
+                disabled={isPending}
+              />
+              <textarea
+                name="ingredients"
+                placeholder="Ingredients (comma-separated or one per line)"
+                className={styles.ingredientsInput}
+                rows={3}
+                disabled={isPending}
+              />
+              <textarea
+                name="instructions"
+                placeholder="Instructions"
+                className={styles.instructionsInput}
+                rows={8}
+                required
+                disabled={isPending}
+              />
+              <button type="submit" className="btn btn-primary" disabled={isPending}>
+                {isPending ? 'Saving...' : 'Save Recipe'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
       <section>
-        <h2>This Week's Meals</h2>
+        <h2>This Week&apos;s Meals</h2>
         <div className={styles.weeklyGrid}>
-          {days.map(day => (
-            <div key={day.id} className={styles.dayColumn}>
+          {days.map(day => {
+            const dayPlan = getDayPlan(day.id);
+            const isEatOut = dayPlan.selection === EAT_OUT_VALUE;
+            const hasRecipe = Boolean(dayPlan.selection) && !isEatOut;
+            const statusLabel = hasRecipe
+              ? `Recipe: ${getRecipeNameById(dayPlan.selection)}`
+              : isEatOut
+                ? 'Eat Out'
+                : 'No selection';
+
+            return (
+            <div
+              key={day.id}
+              className={`${styles.dayColumn} ${hasRecipe ? styles.dayColumnSelected : ''} ${isEatOut ? styles.dayColumnEatOut : ''} ${!hasRecipe && !isEatOut ? styles.dayColumnEmpty : ''}`}
+            >
               <div className={styles.dayTitle}>
                 <span style={{ fontWeight: day.isToday ? 'bold' : 'normal', color: day.isToday ? 'var(--primary-color)' : 'inherit' }}>
                   {day.name} {day.date}
                 </span>
               </div>
-              {weeklyMeals[day.id] ? (
-                <div 
-                  className={`${styles.mealSlot} ${styles.mealSlotAssigned}`}
-                  onClick={() => assignMeal(day.id)}
-                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') assignMeal(day.id); }}
-                  tabIndex={0}
-                  role="button"
-                >
-                  {weeklyMeals[day.id]}
-                </div>
-              ) : (
-                <div 
-                  className={styles.mealSlot}
-                  onClick={() => assignMeal(day.id)}
-                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') assignMeal(day.id); }}
-                  tabIndex={0}
-                  role="button"
-                >
-                  + Assign Meal
+              <div className={`${styles.dayStatus} ${hasRecipe ? styles.dayStatusSelected : ''} ${isEatOut ? styles.dayStatusEatOut : ''} ${!hasRecipe && !isEatOut ? styles.dayStatusEmpty : ''}`}>
+                {statusLabel}
+              </div>
+              <select
+                className={styles.daySelect}
+                value={dayPlan.selection}
+                onChange={(e) => handleAssignRecipe(day.id, e.target.value)}
+                disabled={isPending}
+              >
+                <option value="">No recipe selected</option>
+                <option value={EAT_OUT_VALUE}>Eat Out</option>
+                {recipes.map((recipe) => {
+                  const missingIngredients = getMissingIngredients(recipe);
+                  const isReady = missingIngredients.length === 0;
+
+                  return (
+                    <option key={recipe.id} value={recipe.id}>
+                      {isReady
+                        ? `${recipe.name} (ready)`
+                        : `${recipe.name} (missing ${missingIngredients.length})`}
+                    </option>
+                  );
+                })}
+              </select>
+              {isEatOut && (
+                <div className={styles.eatOutWrap}>
+                  <textarea
+                    className={styles.eatOutDescription}
+                    placeholder="Where or what are you eating out?"
+                    value={dayPlan.eatOutDescription}
+                    onChange={(e) => handleEatOutDescriptionChange(day.id, e.target.value)}
+                    disabled={isPending}
+                    rows={3}
+                  />
+                  <button
+                    type="button"
+                    className={`${styles.btnSecondary} ${styles.eatOutSaveBtn}`}
+                    onClick={() => saveEatOutDescription(day.id)}
+                    disabled={isPending}
+                  >
+                    Save Note
+                  </button>
                 </div>
               )}
             </div>
-          ))}
+          )})}
         </div>
       </section>
 
       <section>
-        <h2>Available Meal Options</h2>
-        <p style={{ color: 'var(--text-muted)', marginBottom: '24px' }}>Recipes based on your current grocery stock.</p>
-        
+        <h2>Recipes</h2>
+        <p style={{ color: 'var(--text-muted)', marginBottom: '24px' }}>Create recipes and assign them to any day.</p>
+
         <div className={styles.recipeGrid}>
-          {mockRecipes.map(recipe => {
-            const hasAllIngredients = recipe.ingredients.every(checkAvailability);
-            
+          {recipes.map(recipe => {
+            const missingIngredients = getMissingIngredients(recipe);
+
             return (
               <div key={recipe.id} className={`glass-panel ${styles.recipeCard}`}>
                 <div>
-                  <div className={styles.availabilityBadge + ' ' + (hasAllIngredients ? styles.badgeReady : styles.badgeMissing)}>
-                    {hasAllIngredients ? 'Ready to cook' : 'Missing ingredients'}
-                  </div>
                   <h3 className={styles.recipeTitle}>{recipe.name}</h3>
-                  
-                  <ul className={styles.ingredientList}>
-                    {recipe.ingredients.map((ing, idx) => {
-                      const avail = checkAvailability(ing);
-                      return (
-                        <li key={idx} className={`${styles.ingredientItem} ${avail ? styles.ingredientAvailable : styles.ingredientMissing}`}>
-                          {ing} {avail ? '✓' : '✗'}
-                        </li>
-                      );
-                    })}
-                  </ul>
-                  
-                  <div className={styles.recipeMethod}>
-                    {recipe.method}
+                  <div className={styles.ingredientSummary}>
+                    {recipe.ingredients.length === 0
+                      ? 'No ingredients listed'
+                      : `${recipe.ingredients.length - missingIngredients.length}/${recipe.ingredients.length} in stock`}
                   </div>
+                  {recipe.ingredients.length > 0 && (
+                    <ul className={styles.ingredientList}>
+                      {recipe.ingredients.map((ingredient) => {
+                        const inStock = isIngredientInStock(ingredient);
+                        return (
+                          <li key={`${recipe.id}-${ingredient}`} className={inStock ? styles.ingredientInStock : styles.ingredientMissing}>
+                            {ingredient} {inStock ? 'in stock' : 'missing'}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                  <div className={styles.recipeMethod}>{recipe.instructions}</div>
                 </div>
+                <button
+                  className={`${styles.deleteRecipeBtn} ${styles.btnSecondary}`}
+                  onClick={() => handleDeleteRecipe(recipe.id)}
+                  disabled={isPending}
+                >
+                  Delete Recipe
+                </button>
               </div>
             );
           })}
+
+          {recipes.length === 0 && (
+            <div className="glass-panel">
+              <p>No recipes yet. Add your first recipe above.</p>
+            </div>
+          )}
         </div>
       </section>
     </div>
