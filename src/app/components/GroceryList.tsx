@@ -131,7 +131,7 @@ export default function GroceryList({ items }: { items: GroceryItem[] }) {
       
       {items.length === 0 && (
         <div style={{ textAlign: 'center', marginTop: '48px', color: 'var(--text-muted)' }}>
-          <p>No groceries added yet. Let's start tracking!</p>
+          <p>No groceries added yet. Let&apos;s start tracking!</p>
         </div>
       )}
     </div>
