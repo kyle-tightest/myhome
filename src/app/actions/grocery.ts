@@ -22,13 +22,18 @@ export async function getGroceryItems() {
 export async function addGroceryItem(formData: FormData) {
   const name = formData.get('name') as string
   const estimatedDaysStr = formData.get('estimatedDays') as string
+  const restockedAtStr = formData.get('restockedAt') as string
   const estimatedDays = estimatedDaysStr ? parseInt(estimatedDaysStr) : 7
+  const lastStocked = restockedAtStr
+    ? new Date(`${restockedAtStr}T12:00:00`)
+    : new Date()
 
   if (!name) return { error: 'Name is required' }
 
   await prisma.groceryItem.create({
     data: {
       name,
+      lastStocked,
       estimatedDays,
       needsRestock: false,
     }
@@ -38,11 +43,15 @@ export async function addGroceryItem(formData: FormData) {
   return { success: true }
 }
 
-export async function restockGroceryItem(id: string) {
+export async function restockGroceryItem(id: string, restockedAt?: string) {
+  const lastStocked = restockedAt
+    ? new Date(`${restockedAt}T12:00:00`)
+    : new Date()
+
   await prisma.groceryItem.update({
     where: { id },
     data: {
-      lastStocked: new Date(),
+      lastStocked,
       needsRestock: false
     }
   })
