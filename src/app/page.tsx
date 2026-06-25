@@ -2,6 +2,7 @@ import { getGroceryItems } from './actions/grocery';
 import GroceryList from './components/GroceryList';
 import MealPlanner from './components/MealPlanner';
 import Link from 'next/link';
+import styles from './page.module.css';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,24 +19,24 @@ export default async function Home({
   const inactiveStyle = { background: 'transparent', color: 'var(--text-muted)', border: '1px solid rgba(255,255,255,0.1)' };
 
   return (
-    <div style={{ padding: 'max(5vh, 40px) max(5vw, 40px)', maxWidth: '1200px', margin: '0 auto', minHeight: '100vh' }}>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
+    <div className={styles.page}>
+      <header className={styles.header}>
         <h1>MyHome Dashboard</h1>
-        <div style={{ display: 'flex', gap: '16px' }}>
-          <Link href="/?tab=groceries" className="btn" style={currentTab === 'groceries' ? activeStyle : inactiveStyle}>Groceries</Link>
-          <Link href="/?tab=meals" className="btn" style={currentTab === 'meals' ? activeStyle : inactiveStyle}>Meals</Link>
+        <div className={styles.tabNav}>
+          <Link href="/?tab=groceries" className={`btn ${styles.tabButton}`} style={currentTab === 'groceries' ? activeStyle : inactiveStyle}>Groceries</Link>
+          <Link href="/?tab=meals" className={`btn ${styles.tabButton}`} style={currentTab === 'meals' ? activeStyle : inactiveStyle}>Meals</Link>
         </div>
       </header>
       
       <main>
         {currentTab === 'groceries' ? (
-          <section style={{ marginBottom: '48px' }}>
+          <section className={styles.section}>
             <h2>Grocery Tracker</h2>
-            <p style={{ marginBottom: '24px' }}>Keep track of what you need and when to restock.</p>
+            <p className={styles.sectionIntro}>Keep track of what you need and when to restock.</p>
             <GroceryList items={items} />
           </section>
         ) : (
-          <section style={{ marginBottom: '48px' }}>
+          <section className={styles.section}>
             <MealPlanner items={items} />
           </section>
         )}
